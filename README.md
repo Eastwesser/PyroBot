@@ -26,7 +26,7 @@ connection URL.
 
 1. Clone the repository:
 
-git clone https://github.com/yourusername/pyrogram-bot.git
+git clone https://github.com/Eastwesser/PyroBot.git
 
 2. Install the dependencies:
 
@@ -54,10 +54,6 @@ python main.py
 - Start the bot and interact with it in your Telegram chat. Use keywords like "прекрасно" or "ожидать" to trigger status
   updates for users.
 - Customize the bot logic in `main.py` according to your requirements.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
