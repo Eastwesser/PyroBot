@@ -16,7 +16,7 @@ Before running the bot, ensure you have the following installed:
 - Python 3.10
 - Pyrogram
 - SQLAlchemy
-- psycopg2-binary (for PostgreSQL database)
+- asyncpg (for PostgreSQL database)
 - tgcrypto (for improved Pyrogram performance)
 
 You'll also need to create a PostgreSQL database and set up environment variables for API credentials and database
