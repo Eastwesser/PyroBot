@@ -60,10 +60,10 @@ def handle_message(client, message):
             user.status_updated_at = datetime.utcnow()
             session.commit()
             logger.info(f"User {user_id} status updated to 'finished'")
-            sent_message = client.send_message(
-                user_id, "Ваша воронка успешно завершена!"
-            )
-            logger.info(f"Sent message with ID {sent_message.message_id} to user {user_id}")
+
+            sent_message = client.send_message(user_id, "Ваша воронка успешно завершена!")
+            if sent_message:
+                logger.info(f"Sent message to user {user_id}")
             return
 
         if "ожидать" in text:
@@ -71,10 +71,12 @@ def handle_message(client, message):
             user.status_updated_at = datetime.utcnow()
             session.commit()
             logger.info(f"User {user_id} status updated to 'waiting'")
+
             sent_message = client.send_message(
                 user_id, "Вы находитесь в состоянии ожидания. Мы свяжемся с вами в ближайшее время."
             )
-            logger.info(f"Sent message with ID {sent_message.message_id} to user {user_id}")
+            if sent_message:
+                logger.info(f"Sent message to user {user_id}")
             return
 
         logger.info(f"Received message from user {user_id}: {text}")
