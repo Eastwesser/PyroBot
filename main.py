@@ -4,14 +4,10 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from pyrogram import Client
-from sqlalchemy import (
-    create_engine,
-    Column,
-    Integer,
-    String,
-    DateTime,
-)
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from models import Base, User
 
 load_dotenv()
 
@@ -20,12 +16,14 @@ api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 db_url = os.getenv('DB_URL')
 
+# Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
+# Initialize the Telegram client
 app = Client(
     'my_bot',
     api_id=api_id,
@@ -33,42 +31,60 @@ app = Client(
     bot_token=bot_token
 )
 
+# Initialize the database engine
 engine = create_engine(db_url)
-Base = declarative_base()
 
-
-class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default='alive')
-    status_updated_at = Column(DateTime, default=datetime.utcnow)
-
-
+# Create database tables
 Base.metadata.create_all(engine)
 
+# Configure session
 Session = sessionmaker(bind=engine)
 session = Session()
 
 
 @app.on_message()
 def handle_message(client, message):
-    text = message.text.lower()
-    user_id = message.from_user.id
+    try:
+        text = message.text.lower()
+        user_id = str(message.from_user.id)  # Use the actual user ID from Telegram
 
-    if "прекрасно" in text or "ожидать" in text:
+        # Fetch or create the user
         user = session.query(User).filter_by(id=user_id).first()
-        if user:
+        if not user:
+            user = User(id=user_id)
+            session.add(user)
+            session.commit()
+
+        if "прекрасно" in text:
             user.status = 'finished'
             user.status_updated_at = datetime.utcnow()
             session.commit()
             logger.info(f"User {user_id} status updated to 'finished'")
-        return
+            sent_message = client.send_message(
+                user_id, "Ваша воронка успешно завершена!"
+            )
+            logger.info(f"Sent message with ID {sent_message.message_id} to user {user_id}")
+            return
 
-    logger.info(f"Received message from user {user_id}: {text}")
+        if "ожидать" in text:
+            user.status = 'waiting'
+            user.status_updated_at = datetime.utcnow()
+            session.commit()
+            logger.info(f"User {user_id} status updated to 'waiting'")
+            sent_message = client.send_message(
+                user_id, "Вы находитесь в состоянии ожидания. Мы свяжемся с вами в ближайшее время."
+            )
+            logger.info(f"Sent message with ID {sent_message.message_id} to user {user_id}")
+            return
+
+        logger.info(f"Received message from user {user_id}: {text}")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
 
 
 if __name__ == '__main__':
-    logger.info("Starting the bot")
-    app.run()
+    try:
+        logger.info("Starting the bot")
+        app.run()
+    except Exception as e:
+        logger.error(f"An error occurred while running the bot: {e}")
